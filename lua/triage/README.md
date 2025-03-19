@@ -1,0 +1,364 @@
+# Triage
+
+Triage is a TShark Lua module that extracts detailed connection (bidirectional flow) information from network packets. It is designed for deep network analysis and triage by enriching each connection with protocol-specific metadata.
+
+## Overview
+
+A connection is defined as a bidirectional flow where the client (the initiating side) is designated as the source. In addition to capturing basic flow attributes, Triage enriches each connection record with detailed metadata from multiple protocols:
+
+- **IP** – Basic network layer details.
+- **TCP** – Transmission Control Protocol specifics.
+- **UDP** – User Datagram Protocol specifics.
+- **DNS** – Domain Name System query and response data.
+- **TLS** – Transport Layer Security handshake and encryption parameters.
+- **HTTP/HTTP2** – Web protocol transactions and header information.
+
+Each enriched connection record is output as a line of Newline-Delimited JSON (NDJSON) to stdout, which makes it easy to integrate with downstream processing pipelines.
+
+## Required Modules
+
+Triage depends on several Lua modules for processing and encoding the captured data:
+
+- **json** – For encoding the extracted data into JSON.
+- **ordered_table** – To maintain the insertion order of keys in table structures.
+- **triage_dns** – For parsing and processing DNS-related fields.
+- **triage_tls** – For parsing and processing TLS-related fields.
+- **triage_http** – For parsing and processing HTTP-related fields.
+- **triage_http2** – For parsing and processing HTTP/HTTP2-related fields.
+
+## Usage
+
+To use Triage, run TShark with the Lua module enabled. For example:
+
+```bash
+tshark -q -X lua_script:triage.lua -r your_capture_file.pcap
+```
+
+## Output
+
+The output is a sequence of JSON objects (NDJSON). Each object describes the single connection. Depending on the identified protocols 
+the connection contains the protocol specific fields as defined in this section.
+
+### Connection Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **id**                       | Unique identifier for the connection (e.g., `"udp.9"`).            |
+| **ts**                       | Timestamp (Unix epoch) when the connection started (e.g., `1741946210.0661`).          |
+| **td**                       | Connection duration in seconds (e.g., `0.021338939666748`).                  |
+
+### IP Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **ip.proto**                 | IP protocol used (e.g., `"UDP"`).                         |
+| **ip.src**                   | Source IP address (e.g., `"10.127.1.61"`).                 |
+| **ip.dst**                   | Destination IP address (e.g., `"8.8.8.8"`).             |
+| **ip.bsent**                 | Number of bytes sent from the source (e.g., `72`).          |
+| **ip.brecv**                 | Number of bytes received (e.g., `146`).                       |
+| **ip.psent**                 | Number of packets sent from the source (e.g., `1`).    |
+| **ip.precv**                 | Number of packets received (e.g., `1`).     |
+
+### UDP Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **udp.srcport**              | UDP source port (e.g., `51645`).                      |
+| **udp.dstport**              | UDP destination port (e.g., `53`).                    |
+| **udp.dgms**                 | Array of UDP datagrams. | 
+| **udp.dgms[].ts**         | Timestamp of the datagram (e.g., `1741946210.0661`, `1741946210.0874`). | 
+| **udp.dgms[].dir**        | Direction indicator (`">"` for outgoing, `"<"` for incoming).  | 
+| **udp.dgms[].len**        | Length in bytes (e.g., `52`, `126`). |
+
+### DNS Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **dns.responses**            | Array of DNS response records.  |
+| **dns.responses[].rr**                       | Record category (e.g., `"authority"`). |
+| **dns.responses[].qn**                       | Queried name (e.g., `"164.165.52.in-addr.arpa"`). |
+| **dns.responses[].rt**                       |  Record type (e.g., `"SOA"`). |
+| **dns.responses[].ttl**                      | Time-to-live (e.g., `940`). |  
+| **dns.responses[].rv**                       |  Record value.  |
+| **dns.queries**              | Array of DNS query records. | 
+| **dns.queries[].qn**          | Query name (e.g., `"15.164.165.52.in-addr.arpa"`) |
+| **dns.queries[].qt**          | Query type (e.g., `"PTR"`).    |
+| **dns.rcode**                | DNS response code (e.g., `3`).     |
+
+### TCP Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **tcp.srcport**                     | TCP source port (e.g., `49910`).                |
+| **tcp.dstport**                     | TCP destination port (e.g., `443`).                        |
+| **tcp.segs**                        | Array of TCP segment records.         |
+| **tcp.segs[].ts**         | Timestamp of the TCP segment (e.g., `1741946210.0285`).   |
+| **tcp.segs[].dir**        | Direction indicator (`">"` for outgoing, `"<"` for incoming).    |
+| **tcp.segs[].len**        | Length in bytes of the TCP segment (e.g., `0`, `211`, etc.).     |
+| **tcp.segs[].flags**      | TCP flags represented as a string; uppercase letters indicate that the flag is set (e.g., `"uAprSf"`).        |
+
+### TLS Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **tls.recs**                        | Array of TLS record objects.                     |
+| **tls.recs[].ver**        | TLS version (e.g., `"0303"`).                                                                                          |
+| **tls.recs[].ct**         | Content type (numeric value, e.g., `22` for handshake, `20` for change cipher spec, `23` for application data).         |
+| **tls.recs[].len**        | Length of the TLS record in bytes (e.g., `206`, `2491`, etc.).                                                       |
+| **tls.recs[].dir**        | Direction indicator (`">"` for outgoing, `"<"` for incoming).                                                       |
+| **tls.cver**                        | TLS client version as advertised in the Client Hello (e.g., `"0303"`).                                                                        |
+| **tls.cciphers**                    | Array of TLS client cipher suite identifiers (e.g., `"C02C"`, `"C02B"`, `"C030"`).                                                   |
+| **tls.cexts**                       | Array of TLS client extension identifiers (e.g., `"0000"`, `"0005"`, `"000A"`).                                                       |
+| **tls.sni**                         | Server Name Indication (SNI) from the TLS handshake (e.g., `"slscr.update.microsoft.com"`).                                                  |
+| **tls.alpn**                        | Array of negotiated application protocols via ALPN (e.g., `["h2", "http/1.1"]`).                                                           |
+| **tls.csigs**                       | Array of TLS client signature algorithm identifiers (e.g., `"0804"`, `"0805"`).                                                        |
+| **tls.csvers**                      | Array of TLS client supported versions (currently empty in the sample).                                                                     |
+| **tls.ja3**                         | JA3 fingerprint for the TLS client, a hash computed from the Client Hello parameters (e.g., `"28a2c9bd18a11de089ef85a160da29e4"`).        |
+| **tls.ja4**                         | Alternative JA4 fingerprint for the TLS client (e.g., `"t12d1909h2_d83cc789557e_7af1ed941c26"`).                                      |
+| **tls.sver**                        | TLS server version as advertised in the Server Hello (e.g., `"0303"`).                                                                   |
+| **tls.scipher**                     | TLS server-selected cipher suite identifier (e.g., `"C02C"`).                                                                             |
+| **tls.sexts**                       | Array of TLS server extension identifiers (e.g., `"0010"`, `"0017"`, `"FF01"`, `"0000"`).                                               |
+| **tls.ssvers**                      | Array of TLS server supported versions (currently empty in the sample).                                                                |
+| **tls.ja3s**                        | JA3S fingerprint for the TLS server, a hash computed from the Server Hello parameters (e.g., `"87b9bed0515be16c82bdc44d88a4a0ec"`).     |
+| **tls.ja4s**                        | Alternative JA4S fingerprint for the TLS server (e.g., `"t1204h2_c02c_5333cdffa7d9"`).    |
+
+### HTTP/HTTP2 Fields
+
+| **JSON Field**                 | **Description**                           |
+|----------------------------|---------------------------------------|
+| **http.req**                  | Array of HTTP request objects.                                                                                 |
+| **http.req[].method**         | HTTP method used in the request (e.g., "GET").                                                                   |
+| **http.req[].uri**            | The requested URI (e.g., "http://geoplugin.net/json.gp").                                                       |
+| **http.req[].num**            | Sequence or identifier number for the HTTP request.                                                          |
+| **http.res**                  | Array of HTTP response objects.                                                                                |
+| **http.res[].code**           | HTTP response status code (e.g., "200").                                                                       |
+| **http.res[].server**         | Web server software information (e.g., "Apache").                                                             |
+| **http.res[].content_type**   | The Content-Type header value of the response (e.g., "application/json; charset=utf-8").                         |
+| **http.res[].content_len**    | The Content-Length header value, indicating the size of the response body (e.g., "956").                         |
+| **http.res[].num**            | Sequence or identifier number for the HTTP response.                                                         |
+
+
+### JSON Examples
+
+DNS Example (formatted):
+
+```json
+{
+    "id": "udp.16",
+    "ts": 1741946282.9414,
+    "td": 0.023156881332397,
+    "ip": {
+        "proto": "UDP",
+        "src": "10.127.1.61",
+        "dst": "8.8.8.8",
+        "bsent": 72,
+        "brecv": 158,
+        "psent": 1,
+        "precv": 1
+    },
+    "udp": {
+        "srcport": 53779,
+        "dstport": 53,
+        "dgms": [
+            {
+                "ts": 1741946282.9414,
+                "dir": ">",
+                "len": 52
+            },
+            {
+                "ts": 1741946282.9646,
+                "dir": "<",
+                "len": 138
+            }
+        ]
+    },
+    "dns": {
+        "responses": [
+            {
+                "rr": "authority",
+                "qn": "229.111.52.in-addr.arpa",
+                "rt": "SOA",
+                "ttl": 271,
+                "rv": ""
+            }
+        ],
+        "queries": [
+            {
+                "qn": "19.229.111.52.in-addr.arpa",
+                "qt": "PTR"
+            }
+        ],
+        "rcode": 3
+    }
+}
+```
+
+TLS Example (formatted and redacted):
+
+```json
+{
+    "id": "tcp.11",
+    "ts": 1741946280.9098,
+    "td": 0.65577793121338,
+    "ip": {
+        "proto": "TCP",
+        "src": "10.127.1.61",
+        "dst": "52.111.229.19",
+        "bsent": 1420,
+        "brecv": 7006,
+        "psent": 12,
+        "precv": 12
+    },
+    "tcp": {
+        "srcport": 49921,
+        "dstport": 443,
+        "segs": [
+            {
+                "ts": 1741946280.9098,
+                "dir": ">",
+                "len": 0,
+                "flags": "uaprSf"
+            },
+            {
+                "ts": 1741946281.0182,
+                "dir": "<",
+                "len": 0,
+                "flags": "uAprSf"
+            },
+            {
+                "ts": 1741946281.0184,
+                "dir": ">",
+                "len": 0,
+                "flags": "uAprsf"
+            },
+            ... OMITTED ...
+            {
+                "ts": 1741946281.5176,
+                "dir": "<",
+                "len": 253,
+                "flags": "uAPrsf"
+            },
+            {
+                "ts": 1741946281.5656,
+                "dir": ">",
+                "len": 0,
+                "flags": "uAprsf"
+            }
+        ]
+    },
+    "tls": {
+        "recs": [
+            {
+                "ver": "0303",
+                "ct": 22,
+                "len": 210,
+                "dir": ">"
+            },
+            {
+                "ver": "0303",
+                "ct": 22,
+                "len": 6098,
+                "dir": "<"
+            },
+            {
+                "ver": "0303",
+                "ct": 22,
+                "len": 102,
+                "dir": ">"
+            },
+            {
+                "ver": "0303",
+                "ct": 20,
+                "len": 1,
+                "dir": ">"
+            },
+            ... OMITTED ...
+            {
+                "ver": "0303",
+                "ct": 23,
+                "len": 33,
+                "dir": "<"
+            },
+            {
+                "ver": "0303",
+                "ct": 23,
+                "len": 248,
+                "dir": "<"
+            }
+        ],
+        "cver": "0303",
+        "cciphers": [
+            "C02C",
+            "C02B",
+            "C030",
+            "C02F",
+            "C024",
+            "C023",
+            "C028",
+            "C027",
+            "C00A",
+            "C009",
+            "C014",
+            "C013",
+            "009D",
+            "009C",
+            "003D",
+            "003C",
+            "0035",
+            "002F",
+            "000A"
+        ],
+        "cexts": [
+            "0000",
+            "0005",
+            "000A",
+            "000B",
+            "000D",
+            "0023",
+            "0010",
+            "0017",
+            "FF01"
+        ],
+        "sni": "nexusrules.officeapps.live.com",
+        "alpn": [
+            "h2",
+            "http/1.1"
+        ],
+        "csigs": [
+            "0804",
+            "0805",
+            "0806",
+            "0401",
+            "0501",
+            "0201",
+            "0403",
+            "0503",
+            "0203",
+            "0202",
+            "0601",
+            "0603"
+        ],
+        "csvers": [],
+        "ja3": "28a2c9bd18a11de089ef85a160da29e4",
+        "ja4": "t12d1909h2_d83cc789557e_7af1ed941c26",
+        "sver": "0303",
+        "scipher": "C030",
+        "sexts": [
+            "0005",
+            "0010",
+            "0017",
+            "FF01"
+        ],
+        "ssvers": [],
+        "ja3s": "67bfe5d15ae567fb35fd7837f0116eec",
+        "ja4s": "t1204h2_c030_09f674154ab3"
+    }
+}
+```
+
+## Integration
+Triage is designed to be easily integrated into existing workflows. The NDJSON output allows you to pipe the results into further processing scripts or tools for additional analysis, reporting, or storage.
+
+## License
+Triage is distributed under the GNU General Public License v3. See the LICENSE file for details.
+
