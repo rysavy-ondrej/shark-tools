@@ -2,6 +2,10 @@
 
 Triage is a TShark Lua module that extracts detailed connection (bidirectional flow) information from network packets. It is designed for deep network analysis and triage by enriching each connection with protocol-specific metadata.
 
+<span style="color: red;">
+For real-time/online use cases use triage-online.lua script. Script triage.lua is supposed for packet capture file processing.
+</span>
+
 ## Overview
 
 A connection is defined as a bidirectional flow where the client (the initiating side) is designated as the source. In addition to capturing basic flow attributes, Triage enriches each connection record with detailed metadata from multiple protocols:
