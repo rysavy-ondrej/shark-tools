@@ -1,25 +1,10 @@
---
--- Copyright (c) 2025 Brno University of Technology
---
--- This file is part of shark-tools package.
---
--- shark-tools package is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- shark-tools package is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
 local tls = { _version = "0.1" }
 
 -------------------------------------------------------------------------------
 -- TAP&TABLE:
 -------------------------------------------------------------------------------
 
-local tap = Listener.new("tls") 
+local tap = Listener.new("tcp","tls") 
 local connection_table = nil
 function tls.create_tap(connections)
     connection_table = connections
@@ -157,9 +142,9 @@ function tap.packet(pinfo, tvb)
             if tls_vers and #tls_vers >= i then rec_ver = to_hexstring(tls_vers[i]) end
             if rec_val then
                 if ip_src == conn.ip.src and tcp_src == conn.tcp.srcport then
-                    table.insert(conn.tls.recs, get_recinfo(rec_val, rec_typ, rec_ver, ">" ))
+                    table.insert(conn.tls.recs, get_recinfo(rec_val, rec_typ, rec_ver, -1 ))
                 else
-                    table.insert(conn.tls.recs, get_recinfo(rec_val, rec_typ, rec_ver, "<" ))
+                    table.insert(conn.tls.recs, get_recinfo(rec_val, rec_typ, rec_ver, 1 ))
                 end
             end
         end

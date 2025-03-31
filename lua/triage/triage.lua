@@ -1,42 +1,16 @@
---
--- Copyright (c) 2025 Brno University of Technology
---
--- This file is part of shark-tools package.
---
--- shark-tools package is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
---
--- shark-tools package is distributed in the hope that it will be useful,
--- but WITHOUT ANY WARRANTY; without even the implied warranty of
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- GNU General Public License for more details.
---
 --[[
+triage.lua
 
-This TShark Lua module extracts detailed connection (bidirectional flow) information from network packets. 
-A connection is defined as a bidirectional flow where the client (the initiating side) is designated as the source. 
-In addition to basic flow attributes, the module enriches each connection with protocol-specific metadata for:
+This TShark Lua script extracts connection (bidirectional flow) information from each packet.
+A connection is defined as a bidirectional flow where the client is the source side of the connection.
+It also enrich the connection with the following protocol related information:
 
-IP – Basic network layer details.
-TCP – Transmission Control Protocol specifics.
-UDP – User Datagram Protocol specifics.
-DNS – Domain Name System query and response data.
-TLS – Transport Layer Security handshake and encryption parameters.
-HTTP/HTTP2 – Web protocol transactions and header information.
+Tested with:
 
-Required Modules:
+TShark (Wireshark) 4.2.5 (v4.2.5-0-g4aa814ac25a1).
 
-json – For encoding the extracted data into JSON.
-ordered_table – To maintain the insertion order of keys in table structures.
-triage_dns – For parsing and processing DNS-related fields.
-triage_tls – For parsing and processing TLS-related fields.
-triage_http – For parsing and processing HTTP-related fields.
-triage_http2 – For parsing and processing HTTP/2-related fields.
+TShark (Wireshark) 4.4.5.
 
-The module outputs each connection record as a line of Newline-Delimited JSON (NDJSON) to stdout, 
-facilitating easy integration with downstream processing pipelines.
 
 Usage:
   tshark -q -X lua_script:triage.lua -r your_capture_file.pcap
@@ -141,12 +115,12 @@ end
 
 function get_tcp_flags_string(flags)
     local flagStr = ""
-    flagStr = flagStr .. (bit32.band(flags, 0x20) ~= 0 and "U" or "u")  -- URG (0x20)
-    flagStr = flagStr .. (bit32.band(flags, 0x10) ~= 0 and "A" or "a")  -- ACK (0x10)
-    flagStr = flagStr .. (bit32.band(flags, 0x08) ~= 0 and "P" or "p")  -- PSH (0x08)
-    flagStr = flagStr .. (bit32.band(flags, 0x04) ~= 0 and "R" or "r")  -- RST (0x04)
-    flagStr = flagStr .. (bit32.band(flags, 0x02) ~= 0 and "S" or "s")  -- SYN (0x02)
-    flagStr = flagStr .. (bit32.band(flags, 0x01) ~= 0 and "F" or "f")  -- FIN (0x01)
+    flagStr = flagStr .. (bit.band(flags, 0x20) ~= 0 and "U" or "u")  -- URG (0x20)
+    flagStr = flagStr .. (bit.band(flags, 0x10) ~= 0 and "A" or "a")  -- ACK (0x10)
+    flagStr = flagStr .. (bit.band(flags, 0x08) ~= 0 and "P" or "p")  -- PSH (0x08)
+    flagStr = flagStr .. (bit.band(flags, 0x04) ~= 0 and "R" or "r")  -- RST (0x04)
+    flagStr = flagStr .. (bit.band(flags, 0x02) ~= 0 and "S" or "s")  -- SYN (0x02)
+    flagStr = flagStr .. (bit.band(flags, 0x01) ~= 0 and "F" or "f")  -- FIN (0x01)
     return flagStr
 end
 
@@ -157,17 +131,20 @@ end
 -- length
 -- flags (for TCP only)
 function get_packet_metrics(pinfo, client)
-    prec = obj { }
+    prec = obj {}
     prec.ts = pinfo.abs_ts
-    if client then prec.dir = ">" else prec.dir = "<" end
-    
+    --if client then prec.dir = ">" else prec.dir = "<" end
+    if client then prec.dir = -1 else prec.dir = 1 end
+
     if f_tcp_len() then prec.len = f_tcp_len().value
     elseif f_udp_len() then prec.len = f_udp_len().value
     else prec.len = 0
     end
 
     if f_tcp_flags() then
-        prec.flags = get_tcp_flags_string(f_tcp_flags().value)
+        prec.flags = obj {}
+        prec.flags.str = get_tcp_flags_string(f_tcp_flags().value)
+        prec.flags.val = f_tcp_flags().value 
     end
     return prec
 end
