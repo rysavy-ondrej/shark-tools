@@ -278,13 +278,10 @@ function udp_tap.packet(pinfo, tvb)
         connections[key] = conn
     end
 
-
     local client = ip_src == conn.ip.src and src_port == conn.udp.srcport
     update_connection(conn, pinfo, client)
     table.insert(conn.udp.dgms, get_packet_metrics(pinfo, client))    
 end
-
-local last_ts = nil
 
 function flush_connections(ts)
     evt = obj { }
@@ -313,7 +310,6 @@ function tap.packet(pinfo, tvb)
         if pinfo.abs_ts > (connections_start + flush_interval) then
             connections_start = pinfo.abs_ts
             flush_connections(pinfo.abs_ts)
-            last_ts = abs_ts
         end
     end
 end
@@ -322,7 +318,7 @@ end
 -- TAP DRAW FUNCTION:
 -------------------------------------------------------------------------------
 function tap.draw()
-    flush_connections(last_ts)
+    flush_connections(nil)
     print('{"event" : "eof" }')
     io.flush()
 end
