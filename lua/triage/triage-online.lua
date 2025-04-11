@@ -42,7 +42,7 @@ The module accepts parameters:
 flush - interval in seconds to export connections. If not specified it exports connection at the end of processing (offline mode).
 
 Usage:
-  tshark -q -X lua_script:triage.lua lua_script1:flush=30 -r your_capture_file.pcap
+  tshark -q -X lua_script:triage-online.lua -X lua_script1:flush=30 -r your_capture_file.pcap
 --]]
 
 -------------------------------------------------------------------------------
@@ -284,7 +284,14 @@ function udp_tap.packet(pinfo, tvb)
     table.insert(conn.udp.dgms, get_packet_metrics(pinfo, client))    
 end
 
-function flush_connections()
+local last_ts = nil
+
+function flush_connections(ts)
+    evt = obj { }
+    evt.event = 'flow-export'
+    evt.ts = ts
+    print(json.encode(evt))
+
     local connection_array = {}
     for key, value in pairs(connections) do
         table.insert(connection_array, value)
@@ -297,16 +304,16 @@ function flush_connections()
         local json_line = json.encode(conn)
         print(json_line)
     end
+    io.flush()
 end
 
 function tap.packet(pinfo, tvb)
     if flush_interval then 
         if not connections_start then connections_start = pinfo.abs_ts end
-
         if pinfo.abs_ts > (connections_start + flush_interval) then
             connections_start = pinfo.abs_ts
-            print('{ "event" : "flush" }')
-            flush_connections()
+            flush_connections(pinfo.abs_ts)
+            last_ts = abs_ts
         end
     end
 end
@@ -315,7 +322,7 @@ end
 -- TAP DRAW FUNCTION:
 -------------------------------------------------------------------------------
 function tap.draw()
-    print('{ "event" : "flush" }')
-    flush_connections()
-    print('{ "event" : "eof" }')
+    flush_connections(last_ts)
+    print('{"event" : "eof" }')
+    io.flush()
 end
