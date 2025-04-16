@@ -4,7 +4,7 @@ local tls = { _version = "0.1" }
 -- TAP&TABLE:
 -------------------------------------------------------------------------------
 
-local tap = Listener.new("tcp","tls") 
+local tap = Listener.new("frame","tls")         -- this is not working for 4.4.5!! Search for the listener for TLS in this version! Using ("tcp","tls") leads to the incorrect order!
 local connection_table = nil
 function tls.create_tap(connections)
     connection_table = connections
@@ -109,13 +109,23 @@ end
 -- TAP PACKET FUNCTION:
 -------------------------------------------------------------------------------
 function tap.packet(pinfo, tvb)
+    
+    io.stderr:write("s")
+
     if not connection_table then error("connection_table is nil!") end
     local stream_id = f_tcp_stream()
     if not stream_id then return end
     local key = "tcp." .. tostring(stream_id.value)
 
     local conn = connection_table[key]
-    if not conn then return end
+    if not conn then 
+        io.stderr:write("!")
+        io.stderr:write(key)
+        io.stderr:write(" ")
+        return 
+    end
+    io.stderr:write(" ")
+
     -- for client/server side identification
     local ip_src   = tostring(f_ip_src())
     local tcp_src  = f_tcp_srcport().value    

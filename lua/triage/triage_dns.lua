@@ -168,6 +168,7 @@ end
 -- TAP PACKET FUNCTION:
 -------------------------------------------------------------------------------
 function tap.packet(pinfo, tvb)
+    io.stderr:write("d ")
     -- get the key for the communicaton based on UDP Stream ID
     local udp_stream_id = f_udp_stream()
     if not udp_stream_id then return end

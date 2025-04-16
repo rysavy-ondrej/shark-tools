@@ -45,6 +45,8 @@ Usage:
   tshark -q -X lua_script:triage-online.lua -X lua_script1:flush=30 -r your_capture_file.pcap
 --]]
 
+io.stderr:write("TRIAGE ONLINE\n")
+
 -------------------------------------------------------------------------------
 -- ARGUMENTS:
 -------------------------------------------------------------------------------
@@ -62,6 +64,11 @@ if args_map["flush"] then
     flush_interval = tonumber(args_map["flush"])  
     if not flush_interval or not (flush_interval > 0) then error("Invalid flush interval specified. It must be number > 0.") end
 end
+
+io.stderr:write("Online mode with capture interval ")
+io.stderr:write(flush_interval)
+io.stderr:write("s.\n")
+
 -------------------------------------------------------------------------------
 -- GLOBAL:
 -------------------------------------------------------------------------------
@@ -74,25 +81,24 @@ local connections = {}
 local connections_start = nil
 
 -------------------------------------------------------------------------------
--- TAPS:
+-- TAPS: Define TAPs used to process the input packets. 
 -------------------------------------------------------------------------------
--- Define TAPs used to process the input packets. 
 local tap = Listener.new("ip") 
 local tcp_tap = Listener.new("tcp")  
-local udp_tap = Listener.new("udp") 
 
--- Instantiate external taps to process application protocols:
 local tls = require("triage_tls")
 tls.create_tap(connections)
-
-local dns = require("triage_dns")
-dns.create_tap(connections)
 
 local http = require("triage_http")
 http.create_tap(connections)
 
 local http2 = require("triage_http2")
 http2.create_tap(connections)
+
+local udp_tap = Listener.new("udp") 
+
+local dns = require("triage_dns")
+dns.create_tap(connections)
 
 -------------------------------------------------------------------------------
 -- FIELDS:
@@ -163,12 +169,12 @@ end
 
 function get_tcp_flags_string(flags)
     local flagStr = ""
-    flagStr = flagStr .. (bit32.band(flags, 0x20) ~= 0 and "U" or "u")  -- URG (0x20)
-    flagStr = flagStr .. (bit32.band(flags, 0x10) ~= 0 and "A" or "a")  -- ACK (0x10)
-    flagStr = flagStr .. (bit32.band(flags, 0x08) ~= 0 and "P" or "p")  -- PSH (0x08)
-    flagStr = flagStr .. (bit32.band(flags, 0x04) ~= 0 and "R" or "r")  -- RST (0x04)
-    flagStr = flagStr .. (bit32.band(flags, 0x02) ~= 0 and "S" or "s")  -- SYN (0x02)
-    flagStr = flagStr .. (bit32.band(flags, 0x01) ~= 0 and "F" or "f")  -- FIN (0x01)
+    flagStr = flagStr .. (bit.band(flags, 0x20) ~= 0 and "U" or "u")  -- URG (0x20)
+    flagStr = flagStr .. (bit.band(flags, 0x10) ~= 0 and "A" or "a")  -- ACK (0x10)
+    flagStr = flagStr .. (bit.band(flags, 0x08) ~= 0 and "P" or "p")  -- PSH (0x08)
+    flagStr = flagStr .. (bit.band(flags, 0x04) ~= 0 and "R" or "r")  -- RST (0x04)
+    flagStr = flagStr .. (bit.band(flags, 0x02) ~= 0 and "S" or "s")  -- SYN (0x02)
+    flagStr = flagStr .. (bit.band(flags, 0x01) ~= 0 and "F" or "f")  -- FIN (0x01)
     return flagStr
 end
 
@@ -199,8 +205,14 @@ end
 -- TAP PACKET FUNCTION:
 -------------------------------------------------------------------------------
 function tcp_tap.packet(pinfo, tvb)
+    io.stderr:write("t")
     local stream_id = f_tcp_stream()
-    if not stream_id then return end
+    if not stream_id or not f_ip_src() then 
+        io.stderr:write("!") 
+        return 
+    end
+    
+
     local key = "tcp." .. tostring(stream_id.value)
 
     local ip_src   = tostring(f_ip_src())
@@ -234,7 +246,13 @@ function tcp_tap.packet(pinfo, tvb)
         init_ip_counters(conn.ip)
         conn.tcp.segs = { }
         connections[key] = conn
+        io.stderr:write("+")
+        io.stderr:write(key)
+        io.stderr:write(" ")
+    else
+        io.stderr:write(" ")
     end
+    
 
     local client = ip_src == conn.ip.src and tcp_src == conn.tcp.srcport
     update_connection(conn, pinfo, client)
@@ -242,8 +260,14 @@ function tcp_tap.packet(pinfo, tvb)
 end
 
 function udp_tap.packet(pinfo, tvb)
+    io.stderr:write("u ")
     local stream_id = f_udp_stream()
-    if not stream_id then return end
+
+    if not stream_id or not f_ip_src() then 
+        io.stderr:write("!") 
+        return 
+    end
+
     local key = "udp." .. tostring(stream_id.value)
     local ip_src   = tostring(f_ip_src())
     local ip_dst   = tostring(f_ip_dst())
@@ -283,6 +307,10 @@ function udp_tap.packet(pinfo, tvb)
     table.insert(conn.udp.dgms, get_packet_metrics(pinfo, client))    
 end
 
+function clear_connections()
+    for k in pairs(connections) do connections[k] = nil end
+end
+
 function flush_connections(ts)
     evt = obj { }
     evt.event = 'flow-export'
@@ -293,11 +321,12 @@ function flush_connections(ts)
     for key, value in pairs(connections) do
         table.insert(connection_array, value)
     end
-    connections = { }
-    table.sort(connection_array, function(a, b)
-        return a.ts < b.ts
-    end)
+    clear_connections()
+
+    table.sort(connection_array, function(a, b) return a.ts < b.ts end)
     for _, conn in pairs(connection_array) do
+        io.stderr:write(conn.id)
+        io.stderr:write(" ")
         local json_line = json.encode(conn)
         print(json_line)
     end
@@ -305,11 +334,16 @@ function flush_connections(ts)
 end
 
 function tap.packet(pinfo, tvb)
+    io.stderr:write("p ")
     if flush_interval then 
         if not connections_start then connections_start = pinfo.abs_ts end
         if pinfo.abs_ts > (connections_start + flush_interval) then
             connections_start = pinfo.abs_ts
+            io.stderr:write("\nf(")
+            io.stderr:write(connections_start)
+            io.stderr:write(")[ ")
             flush_connections(pinfo.abs_ts)
+            io.stderr:write("]f\n")
         end
     end
 end
