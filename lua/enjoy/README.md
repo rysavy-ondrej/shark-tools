@@ -1,16 +1,16 @@
-# Triage
+# enjoy
 
-Triage is a TShark Lua module that extracts detailed connection (bidirectional flow) information from network packets. 
+enjoy is a TShark Lua module that extracts detailed connection (bidirectional flow) information from network packets. 
 It is designed to collect connection-oriented information, enriching each connection with protocol-specific metadata.
 
 <span style="color: red;">
-For real-time/online use cases, use the triage-online.lua script, which collects and exports connections within the windows of the specified time interval. 
-Script triage.lua is intended for packet capture file processing and it collects all connections and exports them at the end of file processing.
+For real-time/online use cases, use the enjoy-online.lua script, which collects and exports connections within the windows of the specified time interval. 
+Script enjoy.lua is intended for packet capture file processing and it collects all connections and exports them at the end of file processing.
 </span>
 
 ## Overview
 
-A connection is defined as a bidirectional flow where the client (the initiating side) is designated as the source. In addition to capturing basic flow attributes, Triage enriches each connection record with detailed metadata from multiple protocols:
+A connection is defined as a bidirectional flow where the client (the initiating side) is designated as the source. In addition to capturing basic flow attributes, enjoy enriches each connection record with detailed metadata from multiple protocols:
 
 - **IP** – Basic network layer details.
 - **TCP** – Transmission Control Protocol specifics.
@@ -23,27 +23,27 @@ Each enriched connection record is output as a line of Newline-Delimited JSON (N
 
 ## Required Modules
 
-Triage depends on several Lua modules for processing and encoding the captured data:
+enjoy depends on several Lua modules for processing and encoding the captured data:
 
 - **json** – For encoding the extracted data into JSON.
 - **ordered_table** – To maintain the insertion order of keys in table structures.
-- **triage_dns** – For parsing and processing DNS-related fields.
-- **triage_tls** – For parsing and processing TLS-related fields.
-- **triage_http** – For parsing and processing HTTP-related fields.
-- **triage_http2** – For parsing and processing HTTP/HTTP2-related fields.
+- **enjoy_dns** – For parsing and processing DNS-related fields.
+- **enjoy_tls** – For parsing and processing TLS-related fields.
+- **enjoy_http** – For parsing and processing HTTP-related fields.
+- **enjoy_http2** – For parsing and processing HTTP/HTTP2-related fields.
 
 ## Usage
 
-To use Triage, run TShark with the Lua module enabled. For example:
+To use enjoy, run TShark with the Lua module enabled. For example:
 
 ```bash
-tshark -q -X lua_script:triage.lua -r CAPTURE_FILE.pcap
+tshark -q -X lua_script:enjoy.lua -r CAPTURE_FILE.pcap
 ```
 
 In online mode, the time interval is specified with the flush argument. The interval is specified in seconds:
 
 ```bash
-tshark -q -X lua_script:triage-online.lua -X lua_script1:flush=30 -i CAPTURE_INTERFACE
+tshark -q -X lua_script:enjoy-online.lua -X lua_script1:flush=30 -i CAPTURE_INTERFACE
 ```
 
 
@@ -373,8 +373,8 @@ TLS Example (formatted and redacted):
 ```
 
 ## Integration
-Triage is designed to be easily integrated into existing workflows. The NDJSON output allows you to pipe the results into further processing scripts or tools for additional analysis, reporting, or storage.
+enjoy is designed to be easily integrated into existing workflows. The NDJSON output allows you to pipe the results into further processing scripts or tools for additional analysis, reporting, or storage.
 
 ## License
-Triage is distributed under the GNU General Public License v3. See the LICENSE file for details.
+enjoy is distributed under the GNU General Public License v3. See the LICENSE file for details.
 
