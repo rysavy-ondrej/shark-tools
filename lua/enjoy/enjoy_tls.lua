@@ -23,6 +23,16 @@ end
 
 local obj = require("ordered_table")
 
+local function safe_field(name, error_msg)
+    local ok, extractor = pcall(Field.new, name)
+    if not ok then
+        error(error_msg)
+        return nil
+    end
+    return extractor
+  end
+
+
 -------------------------------------------------------------------------------
 -- FIELDS:
 -------------------------------------------------------------------------------
@@ -50,10 +60,10 @@ local f_tls_hs_sup_version  = Field.new("tls.handshake.extensions.supported_vers
 
 -- TLS-JA hashes field extractors (handshake)
 local f_tls_hs_ja3  = Field.new("tls.handshake.ja3")
-local f_tls_hs_ja4  = Field.new("tls.handshake.ja4")
+local f_tls_hs_ja4  = safe_field("tls.handshake.ja4", "JA4+ Plugin for Wireshark not installed. See https://github.com/FoxIO-LLC/ja4/tree/main/wireshark")
 local f_tls_hs_ja3s  = Field.new("tls.handshake.ja3s")
-local f_tls_ja4_ja4s  = Field.new("ja4.ja4s")
-local f_tls_ja4_ja4x  = Field.new("ja4.ja4x") 
+local f_tls_ja4_ja4s  = safe_field("ja4.ja4s", "JA4+ Plugin for Wireshark not installed. See https://github.com/FoxIO-LLC/ja4/tree/main/wireshark")
+local f_tls_ja4_ja4x  = safe_field("ja4.ja4x", "JA4+ Plugin for Wireshark not installed. See https://github.com/FoxIO-LLC/ja4/tree/main/wireshark") 
 
 -------------------------------------------------------------------------------
 -- FUNCTIONS:
