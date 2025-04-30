@@ -23,11 +23,17 @@ end
 
 local obj = require("ordered_table")
 
+local function warn(msg)
+    -- prepend “Warning: ” and append a newline
+    local str = ("Warning: %s\n"):format(msg)
+    io.stderr:write(str)
+  end
+
 local function safe_field(name, error_msg)
     local ok, extractor = pcall(Field.new, name)
     if not ok then
-        error(error_msg)
-        return nil
+        warn(error_msg)
+        return function() return nil end
     end
     return extractor
   end
