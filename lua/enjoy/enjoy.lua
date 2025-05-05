@@ -56,6 +56,25 @@ Example:
 --]]
 
 
+function info_write(str)
+    io.stderr:write("Info: " )
+    io.stderr:write(str)
+    io.stderr:write("\n")
+end
+
+local handle = io.popen("tshark -v")
+local result = handle:read("*a")
+handle:close()
+
+-- Extract the version from the result
+local version_major, version_minor, version_patch = result:match("TShark %(Wireshark%) (%d+)%.(%d+)%.(%d+)")
+if (tonumber(version_major) == 3 and tonumber(version_minor) >= 6) or tonumber(version_major) == 4
+then
+    info_write(string.format("TShark version: %d.%d.%d", version_major,version_minor,version_patch))
+else
+    error("Invalid tshark version. At least 3.6.x is required.")
+end
+
 -------------------------------------------------------------------------------
 -- ARGUMENTS:
 -------------------------------------------------------------------------------
@@ -73,24 +92,27 @@ if args_map["debug"] then
     __debug = true
 end
 
+
+
 function debug_write(str)
     if __debug then
         io.stderr:write(str)
     end
 end
 
-debug_write("Running Enjoy in ")
+
+local packets_processed = 0
+local connections_flushed = 0
 
 local flush_interval = nil
 if args_map["flush"] then 
     flush_interval = tonumber(args_map["flush"])  
     if not flush_interval or not (flush_interval > 0) then error("Invalid flush interval specified. It must be number > 0.") end
 
-    debug_write("online mode with capture interval ")
-    debug_write(flush_interval)
-    debug_write("s.\n")
+    info_write(string.format("Running Enjoy in online mode with capture interval %d seconds.", flush_interval))
+
 else
-    debug_write("batch mode.\n")    
+    info_write("Running Enjoy in batch mode.\n")    
 end
 
 
@@ -366,6 +388,7 @@ function flush_connections(ts)
         debug_write(" ")
         local json_line = json.encode(conn)
         print(json_line)
+        connections_flushed = connections_flushed + 1
     end
     io.flush()
 end
@@ -374,6 +397,7 @@ function tap.packet(pinfo, tvb)
     debug_write("p_")
     debug_write(pinfo.number)
     debug_write(" ")
+    packets_processed = packets_processed + 1
 
     last_packet_time = pinfo.abs_ts
     if not connections_start then connections_start = pinfo.abs_ts end
@@ -398,4 +422,5 @@ function tap.draw()
     flush_connections(last_packet_time)
     print('{"event" : "eof" }')
     io.flush()
+    info_write(string.format("Capture completed. Processed %d packets in %d connections.", packets_processed, connections_flushed))
 end
