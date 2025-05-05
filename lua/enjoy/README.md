@@ -375,6 +375,17 @@ TLS Example (formatted and redacted):
 ## Integration
 enjoy is designed to be easily integrated into existing workflows. The NDJSON output allows you to pipe the results into further processing scripts or tools for additional analysis, reporting, or storage.
 
+
+## Compatibility
+
+The tool has been tested on the following tshark versions:
+
+* 3.6.7  ??
+ 
+* 4.2.5
+* 4.4.5
+
+
 ## License
 enjoy is distributed under the GNU General Public License v3. See the LICENSE file for details.
 

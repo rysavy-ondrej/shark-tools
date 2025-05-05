@@ -12,7 +12,7 @@ function http2.create_tap(connections)
 end
 
 local obj = require("ordered_table")
-
+local sfield = require("safe_field")
 -------------------------------------------------------------------------------
 -- FIELDS:
 -------------------------------------------------------------------------------
@@ -20,10 +20,10 @@ local obj = require("ordered_table")
 local f_tcp_stream        = Field.new("tcp.stream")
 local f_frame_number        = Field.new("frame.number")
 
-local f_http2_req_full_uri = Field.new("http2.request.full_uri")
+local f_http2_req_full_uri = sfield.new("http2.request.full_uri", "Field http2.request.full_uri is not available.")     -- not available in 3.6.7
 local f_http2_req_method = Field.new("http2.headers.method")
 local f_http2_req_ua = Field.new("http2.headers.user_agent")
-local f_http2_req_in = Field.new("http2.request_in")
+local f_http2_req_in = sfield.new("http2.request_in", "Field http2.request_in is not available.")                 -- not available in 3.6.7
 
 local f_http2_resp_code = Field.new("http2.headers.status")
 local f_http2_resp_server = Field.new("http2.headers.server")
