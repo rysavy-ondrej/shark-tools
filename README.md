@@ -117,6 +117,7 @@ The scripts provided can be used to capture communication in the local network. 
    After=network.target
 
    [Service]
+   ExecStartPre=/usr/bin/pkill -f '/snap/bin/pwsh -File /home/rysavy/shark/capture-tap.ps1'
    ExecStart=/snap/bin/pwsh -File /home/USERNAME/shark/capture-tap.ps1
    Restart=always
    RestartSec=10
