@@ -41,6 +41,8 @@ facilitating easy integration with downstream processing pipelines.
 The module accepts parameters:
 flush - interval in seconds to export connections. If not specified it exports connection at the end of processing (offline mode).
 debug - set to true to see the packet processing details.
+event - set to true to output also the "event" lines in the output.
+
 
 Usage:
   tshark -q -X lua_script:enjoy.lua -r your_capture_file.pcap
@@ -92,7 +94,16 @@ if args_map["debug"] then
     __debug = true
 end
 
+local __event = false
+if tostring(args_map["event"]) == "true" then
+    __event = true
+end
 
+function print_event(str)
+    if __event then 
+        print(str)
+    end
+end
 
 function debug_write(str)
     if __debug then
@@ -181,7 +192,7 @@ IP_PROTOCOLS = {
     [1]   = "ICMP",
     [2]   = "IGMP",
     [3]   = "GGP",
-    [4]   = "IP",   -- Encapsulation of IP within IP
+    [4]   = "IP",         -- Encapsulation of IP within IP
     [6]   = "TCP",
     [8]   = "EGP",
     [9]   = "IGP",        -- Obsolete: Interior Gateway Protocol
@@ -376,7 +387,7 @@ function flush_connections(ts)
     evt.event = 'flow-export'
     evt.ts = connections_start
     evt.te = ts
-    print(json.encode(evt))
+    print_event(json.encode(evt))
 
     local connection_array = {}
     for key, value in pairs(connections) do
@@ -423,7 +434,7 @@ end
 -------------------------------------------------------------------------------
 function tap.draw()
     flush_connections(last_packet_time)
-    print('{"event" : "eof" }')
+    print_event('{"event" : "eof" }')
     io.flush()
     info_write(string.format("Capture completed. Processed %d packets in %d connections.", packets_processed, connections_flushed))
 end

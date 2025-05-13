@@ -1,0 +1,2 @@
+tshark -q -X lua_script:../lua/enjoy/enjoy.lua -X lua_script1:flush=5 -r ../examples/test.pcapng > ../examples/test.flush.ndjson
+tshark -q -X lua_script:../lua/enjoy/enjoy.lua -X lua_script1:flush=5 -X lua_script1:event=true -r ../examples/test.pcapng > ../examples/test.event.ndjson
