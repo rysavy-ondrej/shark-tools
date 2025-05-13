@@ -109,7 +109,31 @@ The scripts provided can be used to capture communication in the local network. 
    & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
    ```
 
-3. **Create the systemd service**
+3. **Create capture termination script**
+   Create `/home/USERNAME/shark/kill-tap.sh` with the following content:
+
+    ```bash
+    #!/bin/bash
+    # Try to kill the process using pkill
+    /usr/bin/pkill -f '/snap/bin/pwsh -File /home/rysavy/shark/capture-tap.ps1'
+    
+    # Capture the exit code of the pkill command
+    exit_code=$?
+    
+    # Check the exit code and handle accordingly
+    if [ $exit_code -eq 0 ]; then
+        echo "Process terminated successfully."
+        exit 0  # Success
+    elif [ $exit_code -eq 1 ]; then
+        echo "No matching processes found."
+        exit 0  # No process to kill, but still consider as success
+    else
+        echo "An error occurred with pkill."
+        exit 1  # Error
+    fi
+    ```
+
+5. **Create the systemd service**
 
    Create `/etc/systemd/system/capture-tap.service`:
 
@@ -119,7 +143,7 @@ The scripts provided can be used to capture communication in the local network. 
    After=network.target
 
    [Service]
-   ExecStartPre=/usr/bin/pkill -f '/snap/bin/pwsh -File /home/USERNAME/shark/capture-tap.ps1' || true
+   ExecStartPre=/home/USERNAME/shark/kill-tap.sh
    ExecStart=/snap/bin/pwsh -File /home/USERNAME/shark/capture-tap.ps1
    Restart=always
    RestartSec=10
