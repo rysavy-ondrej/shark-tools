@@ -279,8 +279,9 @@ function tcp_tap.packet(pinfo, tvb)
     if not conn then
         conn = obj { }
         conn.id = key
-        conn.ts = pinfo.abs_ts    -- first seen timestamp
-        conn.td = 0              -- duration, initially 0  
+        conn.tx = 0                     -- export connection timestamp, updated upon export
+        conn.ts = pinfo.abs_ts          -- first seen timestamp
+        conn.td = 0                     -- duration, initially 0  
         conn.ip = obj { }
         conn.tcp = obj { }
         conn.ip.proto = ip_proto
@@ -334,8 +335,9 @@ function udp_tap.packet(pinfo, tvb)
     if not conn then
         conn = obj { }
         conn.id = key
-        conn.ts = pinfo.abs_ts    -- first seen timestamp
-        conn.td = 0              -- duration, initially 0  
+        conn.tx = 0                 -- export connection timestamp, updated upon export
+        conn.ts = pinfo.abs_ts      -- first seen timestamp
+        conn.td = 0                 -- duration, initially 0  
         conn.ip = obj { }
         conn.udp = obj { }
         conn.ip.proto = ip_proto
@@ -378,6 +380,7 @@ function flush_connections(ts)
 
     local connection_array = {}
     for key, value in pairs(connections) do
+        value.tx = ts                               -- update export time
         table.insert(connection_array, value)
     end
     clear_connections()
