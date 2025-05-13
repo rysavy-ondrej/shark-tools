@@ -115,7 +115,7 @@ The scripts provided can be used to capture communication in the local network. 
     ```bash
     #!/bin/bash
     # Try to kill the process using pkill
-    /usr/bin/pkill -f '/snap/bin/pwsh -File /home/USERNAME/shark/capture-tap.ps1'
+    /usr/bin/pkill tshark
     
     # Capture the exit code of the pkill command
     exit_code=$?
