@@ -103,10 +103,10 @@ The scripts provided can be used to capture communication in the local network. 
    Create `/home/USERNAME/shark/capture-tap.ps1` with the following content:
 
    ```pwsh
-   $scriptPath = $MyInvocation.MyCommand.Path
+   $scriptPath = $PSScriptRoot
    
    tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=1 -i "MONITOR" |
-   $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
+   & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
    ```
 
 3. **Create the systemd service**
