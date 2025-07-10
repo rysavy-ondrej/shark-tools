@@ -69,7 +69,7 @@ begin {
     $fileNameBase = "capture_" + $currentBucketStart.ToString("yyyyMMddTHHmm")
     
     if ($Structured) {
-        $OutputDirectoryPath = Join-Path $OutputDirectoryPath $currentBucketStart.ToString("yyyy/MM/dd")
+        $OutputDirectoryPath = Join-Path $OutputDirectory $currentBucketStart.ToString("yyyy/MM/dd")
         if (!(Test-Path $OutputDirectoryPath)) {
             New-Item -ItemType Directory -Path $OutputDirectoryPath | Out-Null
         }
@@ -112,7 +112,7 @@ process {
                 $fileNameBase = "capture_" + $currentBucketStart.ToString("yyyyMMddTHHmm")
 
                 if ($Structured) {
-                    $OutputDirectoryPath = Join-Path $OutputDirectoryPath $currentBucketStart.ToString("yyyy/MM/dd")
+                    $OutputDirectoryPath = Join-Path $OutputDirectory $currentBucketStart.ToString("yyyy/MM/dd")
                     if (!(Test-Path $OutputDirectoryPath)) {
                         New-Item -ItemType Directory -Path $OutputDirectoryPath | Out-Null
                     }
