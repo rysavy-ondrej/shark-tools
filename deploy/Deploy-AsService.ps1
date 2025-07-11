@@ -111,7 +111,7 @@ network:
 
 $captureInterfaceConfig | sudo tee /etc/netplan/99-capture.yaml
 
-$captureTapPs1 = '$MonitorInterface="'+ $MonitorInterfaceId + @'"
+$captureTapPs1 = '$MonitorInterface="'+ $MonitorInterfaceId + '"' + @'
 
 & tshark -q -X lua_script:$PSScriptRoot/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i $MonitorInterface |
 & $PSScriptRoot/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress -Structured
