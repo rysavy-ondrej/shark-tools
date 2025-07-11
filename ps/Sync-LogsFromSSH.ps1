@@ -63,6 +63,9 @@ foreach ($remoteFile in $remoteFileList) {
         # Write-Host "Downloading $remoteFile..."
         $scpSource = "${RemoteHost}:${remoteFile}"
         $scpTarget = Join-Path $LocalPath $remoteFileName
+
+# scp -o ConnectTimeout=10 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 user@host:/remote/file.txt C:\local\
+# These settings help detect broken SSH connections faster and avoid indefinite hanging.
         & scp $scpSource $scpTarget
     }
     else {
