@@ -48,12 +48,10 @@ This script will install and configure a tshark-based network
 capturing agent as a systemd service on your local Linux machine.
 
 It will perform the following actions:
-  • List available network interfaces
-  • Prompt for the monitoring interface name
   • Clone the shark-tools Git repository
-  • Set up static network configuration via netplan
+  • Set up static configuration via netplan for monitoring interface
   • Create a capture script and a shutdown script
-  • Register and start a persistent systemd service
+  • Register and start a persistent systemd capture service 
 
 ---------------------------------------------------------------
  Requirements:
@@ -111,6 +109,12 @@ network:
 
 $captureInterfaceConfig | sudo tee /etc/netplan/99-capture.yaml
 
+
+
+Write-Host "Reloading Netplan configuration..."
+& sudo netplan apply
+& sudo ip link set $MonitorInterfaceId up
+
 $captureTapPs1 = '$MonitorInterface="'+ $MonitorInterfaceId + '"' + @'
 
 & tshark -q -X lua_script:$PSScriptRoot/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i $MonitorInterface |
@@ -119,7 +123,7 @@ $captureTapPs1 = '$MonitorInterface="'+ $MonitorInterfaceId + '"' + @'
 
 $captureTapPs1 | Set-Content -Path capture-tap.ps1
 
-$killTapPs1 = @'
+$killTapSh = @'
 #!/bin/bash
 # Try to kill the process using pkill
 /usr/bin/pkill tshark
@@ -140,7 +144,8 @@ else
 fi
 '@
 
-$killTapPs1 | Set-Content -Path kill-tap.ps1
+$killTapSh | Set-Content -Path kill-tap.sh
+& chmod a+x kill-tap.sh
 
 $captureTapService = @"
 [Unit]
