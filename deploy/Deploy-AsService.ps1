@@ -4,12 +4,18 @@
 #
 # iex (iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1")
 #
-# iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1" -OutFile "install.ps1"; .\install.ps1; rm .\install.ps1
+# iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1" -OutFile "install.ps1"; & .\install.ps1; rm .\install.ps1
 # 
-# Parameters:
-param(
-    [string]$MonitorInterfaceId
-)
+
+
+# iwr -useb "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1" | iex
+
+
+Write-Host "Host interfaces:"
+
+& ip address
+
+$MonitorInterfaceId = Read-Host "Enter monitoring interface name"
 
 $EnjoyRootPath = Get-Location
 
