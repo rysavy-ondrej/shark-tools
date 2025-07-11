@@ -105,7 +105,7 @@ The scripts provided can be used to capture communication in the local network. 
    ```pwsh
    $scriptPath = $PSScriptRoot
    
-   tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=1 -i "MONITOR" |
+   tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i "MONITOR" |
    & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
    ```
 
