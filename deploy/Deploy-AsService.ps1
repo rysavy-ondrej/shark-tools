@@ -1,22 +1,80 @@
-# Install the network capturing agent as a service at the local host:
-#
-# Run this command from the powershell on the target machine in the root folder:
-#
-# iex (iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1")
-#
-# iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1" -OutFile "install.ps1"; & .\install.ps1; rm .\install.ps1
-# 
+<#
+.SYNOPSIS
+Installs and configures a network capturing agent as a systemd service on the local Linux machine.
 
+.DESCRIPTION
+This script automates the deployment of a tshark-based capture service, running via PowerShell and systemd. It performs the following:
 
-# iwr -useb "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1" | iex
+1. Displays network interfaces.
+2. Prompts for the monitoring interface name.
+3. Clones the `shark-tools` repository.
+4. Configures a static netplan entry for the selected interface.
+5. Creates two scripts:
+   - `capture-tap.ps1`: Captures network traffic via tshark and processes it.
+   - `kill-tap.sh`: Ensures any existing capture process is terminated.
+6. Defines a `capture-tap.service` systemd unit to manage the service.
+7. Enables, starts, and checks the status of the service.
 
+.EXAMPLE
+Run directly from GitHub:
 
+    iex (iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deploy/Deploy-AsService.ps1")
+
+.PARAMETER MonitorInterfaceId
+The name of the network interface to use for monitoring (e.g., `eth0`, `enp0s3`).
+
+.OUTPUTS
+- `capture-tap.ps1`: PowerShell capture script.
+- `kill-tap.sh`: Shell script to terminate tshark.
+- `/etc/systemd/system/capture-tap.service`: Systemd unit file.
+- System logs: `/var/log/capture-tap.out` and `/var/log/capture-tap.err`.
+
+.NOTES
+- Requires PowerShell Core, git, tshark, and systemd.
+- Must be run with sudo privileges or as a user with rights to write to `/etc` and manage services.
+- Designed for Linux systems with `netplan`.
+
+.LINK
+https://github.com/rysavy-ondrej/shark-tools
+
+#>
+
+$banner = @"
+===============================================================
+ Shark Tools – Network Capturing Agent Deployment Script
+===============================================================
+
+This script will install and configure a tshark-based network
+capturing agent as a systemd service on your local Linux machine.
+
+It will perform the following actions:
+  • List available network interfaces
+  • Prompt for the monitoring interface name
+  • Clone the shark-tools Git repository
+  • Set up static network configuration via netplan
+  • Create a capture script and a shutdown script
+  • Register and start a persistent systemd service
+
+---------------------------------------------------------------
+ Requirements:
+  • PowerShell Core (pwsh)
+  • Git
+  • tshark
+  • systemd
+  • sudo privileges (to write to /etc and manage services)
+===============================================================
+"@
+
+Write-Host $banner -ForegroundColor Cyan
+
+Write-Host ""
 Write-Host "Host interfaces:"
 
 $UserName = $env:USER
 
 & ip address
 
+Write-Host ""
 $MonitorInterfaceId = Read-Host "Enter monitoring interface name"
 
 $EnjoyRootPath = Get-Location
