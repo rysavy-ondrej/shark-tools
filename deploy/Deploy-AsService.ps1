@@ -38,7 +38,7 @@ $captureInterfaceConfig = @"
 network:
   version: 2
   ethernets:
-    $MonitorInterfaceId:
+    ${MonitorInterfaceId}:
       dhcp4: false
       dhcp6: false
       link-local: []
@@ -49,12 +49,11 @@ network:
       wakeonlan: false
 "@
 
-$captureInterfaceConfig | Set-Content -Path /etc/netplan/99-capture.yaml
+$captureInterfaceConfig | sudo tee /etc/netplan/99-capture.yaml
 
-$captureTapPs1 = @'
-$scriptPath = $PSScriptRoot
-tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=1 -i "MONITOR" |
-& $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
+$captureTapPs1 = '$MonitorInterface='+ $MonitorInterfaceId + @'
+tshark -q -X lua_script:$PSScriptRoot/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=1 -i $MonitorInterface |
+& $PSScriptRoot/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress -Structured
 '@
 
 $captureTapPs1 | Set-Content -Path capture-tap.ps1
@@ -103,7 +102,7 @@ WantedBy=multi-user.target
 
 <#
 
-$captureTapService | Set-Content -Path /etc/systemd/system/capture-tap.service
+$captureTapService | sudo tee /etc/systemd/system/capture-tap.service
 
 & sudo systemctl daemon-reload
 & sudo systemctl enable capture-tap.service
