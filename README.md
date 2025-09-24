@@ -106,7 +106,7 @@ The scripts provided can be used to capture communication in the local network. 
    $scriptPath = $PSScriptRoot
    
    tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i "MONITOR" |
-   & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress $true
+   & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress -Structured
    ```
 
 3. **Create capture termination script**
@@ -116,6 +116,7 @@ The scripts provided can be used to capture communication in the local network. 
     #!/bin/bash
     # Try to kill the process using pkill
     /usr/bin/pkill tshark
+    rm /tmp/*.pcapng
     
     # Capture the exit code of the pkill command
     exit_code=$?
