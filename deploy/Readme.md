@@ -40,3 +40,51 @@ iex (iwr "https://raw.githubusercontent.com/rysavy-ondrej/shark-tools/main/deplo
 > * Configure Netplan
 > * Install and enable the capture agent as a systemd service
 
+## Possible Issues
+
+### tshark has not permission to run Lua scripts
+
+When executing tshark with lua script the following error occurs:
+
+```“You don't have permission to read the file”```
+
+Consider that this error occurs when you execute:
+
+```bash
+$ tshark -X lua_script:"a.lua"
+
+tshark: You don't have permission to read the file "a.lua".
+```
+
+One possible reason can be that AppArmor is blocking TShark from reading arbitrary Lua files, which shows up as the misleading “You don't have permission to read the file” error—even if the file is 644.
+
+Troubleshooting:
+
+1. Confirm Lua is compiled in and enabled: 
+```bash
+tshark -v | grep -i lua        # should mention Lua
+echo $WIRESHARK_ENABLE_LUA     # should print 1
+```
+
+2. Rule out simple FS perms / path
+```
+pwd
+ls -l a.lua                     # expect -rw-r--r--
+stat .                          # directory must have x (execute) bit
+tshark -X lua_script:"$PWD/a.lua"
+```
+
+3. Check for AppArmor denials
+```
+sudo aa-status | grep -E 'tshark|wireshark'
+   tshark//dumpcap
+   tshark
+```
+4. Try to relax AppArmor for TShark
+```
+sudo aa-complain /usr/bin/tshark
+# or (stronger) temporarily disable the profile
+sudo aa-disable /usr/bin/tshark
+sudo systemctl reload apparmor
+```
+
