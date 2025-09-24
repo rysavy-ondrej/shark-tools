@@ -34,8 +34,7 @@ The script can capture JA4 fingerprints if they are provided by Wireshark. This 
 ~/.local/lib/wireshark/plugins/4.4/epan
 ```
 
-To obtain the precompiled binaries for various operating systems and Wireshark versions, visit 
-FoxIO repository [https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries](https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries).
+To obtain precompiled binaries for different operating systems and versions of Wireshark, visit the repository at [https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries](https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries).
 
 ---
 
