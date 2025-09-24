@@ -23,6 +23,23 @@ sudo usermod -a -G wireshark $USER
 
 Verify that packet capture works on the target interface before proceeding.
 
+
+---
+
+### JA4 extension
+
+The script can capture JA4 fingerprints if they are provided by Wireshark. This is not available by default, and the shared library must be installed in the plugins folder.
+
+```
+~/.local/lib/wireshark/plugins/4.4/epan
+```
+
+To obtain the precompiled binaries for various operating systems and Wireshark versions, check:
+
+```
+https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries.
+```
+
 ---
 
 ## Automated Deployment via PowerShell
