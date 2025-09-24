@@ -87,4 +87,17 @@ sudo aa-complain /usr/bin/tshark
 sudo aa-disable /usr/bin/tshark
 sudo systemctl reload apparmor
 ```
+5. Adjust AppArmor configuration for tshark
+If the issue is caused by AppArmor, edit the configuration in the /etc/apparmor.d/local/usr.bin.tshark file by adding the trusted folders.
+```
+/path/to/other/folder/** r,
+```
+and then reload the module:
+```
+sudo apparmor_parser -r /etc/apparmor.d/usr.bin.tshark
+sudo systemctl reload apparmor
+```
+
+
+
 
