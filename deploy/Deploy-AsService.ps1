@@ -127,7 +127,7 @@ $killTapSh = @'
 #!/bin/bash
 # Try to kill the process using pkill
 /usr/bin/pkill tshark
-
+rm /tmp/*.pcapng
 # Capture the exit code of the pkill command
 exit_code=$?
 
