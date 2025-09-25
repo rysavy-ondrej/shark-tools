@@ -36,6 +36,8 @@ The script can capture JA4 fingerprints if they are provided by Wireshark. This 
 
 To obtain precompiled binaries for different operating systems and versions of Wireshark, visit the repository at [https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries](https://github.com/FoxIO-LLC/ja4/tree/main/wireshark/binaries).
 
+*The ja4.so may not work correctly for some versions (there is a bug in the 4.4 version for SSL connections). In this case, the Tshark stops with a fatal error when decoding the packet, which causes an error in the plugin.*
+
 ---
 
 ## Automated Deployment via PowerShell
