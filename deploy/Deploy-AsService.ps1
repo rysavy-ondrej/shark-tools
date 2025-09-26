@@ -117,8 +117,8 @@ Write-Host "Reloading Netplan configuration..."
 
 $captureTapPs1 = '$MonitorInterface="'+ $MonitorInterfaceId + '"' + @'
 
-& tshark -q -X lua_script:$PSScriptRoot/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i $MonitorInterface |
-& $PSScriptRoot/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress -Structured
+& tshark -q -X lua_script:$PSScriptRoot/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i $MonitorInterface -b duration:600 -w $PSScriptRoot/raw/raw.pcapng |
+& $PSScriptRoot/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory $PSScriptRoot/log -Compress -Structured
 '@
 
 $captureTapPs1 | Set-Content -Path capture-tap.ps1
