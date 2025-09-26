@@ -103,10 +103,10 @@ The scripts provided can be used to capture communication in the local network. 
    Create `/home/USERNAME/shark/capture-tap.ps1` with the following content:
 
    ```pwsh
+   $interface=MONITOR
    $scriptPath = $PSScriptRoot
-   
-   tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i "MONITOR" |
-   & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory ./data -Compress -Structured
+   tshark -q -X lua_script:$scriptPath/shark-tools/lua/enjoy/enjoy.lua -X lua_script1:flush=60 -i "$interface" -b duration:600 -w $scriptPath/raw/raw.pcapng |
+   & $scriptPath/shark-tools/ps/Rotate-Json.ps1 -IntervalMinutes 10 -OutputDirectory $scriptPath/log -Structured -Compress
    ```
 
 3. **Create capture termination script**
