@@ -26,6 +26,7 @@ DNS – Domain Name System query and response data.
 TLS – Transport Layer Security handshake and encryption parameters.
 HTTP/HTTP2 – Web protocol transactions and header information.
 MQTT – Broker connection, subscribe, and publish information.
+MODBUS – Modbus/TCP request and response summaries.
 
 Required Modules:
 
@@ -36,6 +37,7 @@ enjoy_tls – For parsing and processing TLS-related fields.
 enjoy_http – For parsing and processing HTTP-related fields.
 enjoy_http2 – For parsing and processing HTTP/2-related fields.
 enjoy_mqtt – For parsing and processing MQTT-related fields.
+enjoy_modbus – For parsing and processing Modbus/TCP-related fields.
 
 The module outputs each connection record as a line of Newline-Delimited JSON (NDJSON) to stdout, 
 facilitating easy integration with downstream processing pipelines.
@@ -44,6 +46,7 @@ The module accepts parameters:
 flush - interval in seconds to export connections. If not specified it exports connection at the end of processing (offline mode).
 debug - set to true to see the packet processing details.
 event - set to true to output also the "event" lines in the output.
+protocols - comma-separated list of protocol modules to enable (dns,tls,http,http2,mqtt,modbus). If not specified, all are enabled.
 
 
 Usage:
@@ -101,6 +104,27 @@ if tostring(args_map["event"]) == "true" then
     __event = true
 end
 
+local enabled_protocols = nil
+
+local function normalize_protocol_name(name)
+    local lowered = string.lower(name)
+    if lowered == "modebus" then return "modbus" end
+    return lowered
+end
+
+if args_map["protocols"] then
+    enabled_protocols = {}
+    for token in string.gmatch(args_map["protocols"], "([^,]+)") do
+        local protocol = normalize_protocol_name(token:match("^%s*(.-)%s*$"))
+        enabled_protocols[protocol] = true
+    end
+end
+
+local function protocol_enabled(name)
+    if enabled_protocols == nil then return true end
+    return enabled_protocols[normalize_protocol_name(name)] == true
+end
+
 function print_event(str)
     if __event then 
         print(str)
@@ -151,20 +175,35 @@ local tap = Listener.new("ip")
 local tcp_tap = Listener.new("tcp")  
 local udp_tap = Listener.new("udp") 
 
-local tls = require("enjoy_tls")
-tls.create_tap(connections, __debug)
+if protocol_enabled("tls") then
+    local tls = require("enjoy_tls")
+    tls.create_tap(connections, __debug)
+end
 
-local http = require("enjoy_http")
-http.create_tap(connections)
+if protocol_enabled("http") then
+    local http = require("enjoy_http")
+    http.create_tap(connections)
+end
 
-local http2 = require("enjoy_http2")
-http2.create_tap(connections)
+if protocol_enabled("http2") then
+    local http2 = require("enjoy_http2")
+    http2.create_tap(connections)
+end
 
-local dns = require("enjoy_dns")
-dns.create_tap(connections, __debug)
+if protocol_enabled("dns") then
+    local dns = require("enjoy_dns")
+    dns.create_tap(connections, __debug)
+end
 
-local mqtt = require("enjoy_mqtt")
-mqtt.create_tap(connections)
+if protocol_enabled("mqtt") then
+    local mqtt = require("enjoy_mqtt")
+    mqtt.create_tap(connections)
+end
+
+if protocol_enabled("modbus") then
+    local modbus = require("enjoy_modbus")
+    modbus.create_tap(connections)
+end
 
 -------------------------------------------------------------------------------
 -- FIELDS:

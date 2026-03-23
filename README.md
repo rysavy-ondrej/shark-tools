@@ -6,6 +6,26 @@ A collection of tools for packet/flow processing based on tshark.
 
 [Enjoy](lua/enjoy/README.md) is a lua module that extracts detailed connection (bidirectional flow) information from network packets.
 
+### Enjoy Python Wrapper
+
+The repository also provides a Python wrapper at [bin/enjoy.py](/d:/GitHub/shark-tools/bin/enjoy.py) that validates `tshark`, validates the Lua script path, selects batch vs live mode, passes protocol selection to `enjoy.lua`, and can save a raw capture with `tshark -w`.
+
+Batch example:
+
+```shell
+python .\bin\enjoy.py --mode batch --input-file .\examples\test.pcapng --protocols dns,tls,http --stdout-file .\examples\out\test.ndjson
+```
+
+Live example with flush interval and raw capture output:
+
+```shell
+python .\bin\enjoy.py --mode live --interface "Ethernet 2" --flush 30 --protocols all --capture-output .\raw\capture.pcapng
+```
+
+Notes:
+* `--stdout-file` stores the NDJSON exported by `enjoy.lua`.
+* `--capture-output` maps to `tshark -w` and stores the raw packet capture.
+
 
 ## Rotate-Json PowerShell Tool
 

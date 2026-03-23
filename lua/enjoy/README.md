@@ -15,6 +15,7 @@ A connection is defined as a bidirectional flow where the client (the initiating
 - **TLS** – Transport Layer Security handshake and encryption parameters.
 - **HTTP/HTTP2** – Web protocol transactions and header information.
 - **MQTT** – Broker connection, subscribe, and publish information.
+- **MODBUS** – Modbus/TCP request and response summaries.
 
 Each enriched connection record is output as a line of Newline-Delimited JSON (NDJSON) to stdout, which makes it easy to integrate with downstream processing pipelines.
 
@@ -29,6 +30,7 @@ enjoy depends on several Lua modules for processing and encoding the captured da
 - **enjoy_http** – For parsing and processing HTTP-related fields.
 - **enjoy_http2** – For parsing and processing HTTP/HTTP2-related fields.
 - **enjoy_mqtt** – For parsing and processing MQTT-related fields.
+- **enjoy_modbus** – For parsing and processing Modbus/TCP-related fields.
 
 ## Usage
 
@@ -45,6 +47,14 @@ In online mode, the time interval is specified with the flush argument. The inte
 tshark -q -X lua_script:enjoy.lua -X lua_script1:flush=30 -i CAPTURE_INTERFACE
 ```
 In online mode, the connections are exported (written to the output) after the flush interval 
+
+Specific protocol enrichers can be enabled with the `protocols` argument:
+
+```bash
+tshark -q -X lua_script:enjoy.lua -X lua_script1:protocols=dns,tls,http -r CAPTURE_FILE.pcap
+```
+
+Supported protocol names are `dns`, `tls`, `http`, `http2`, `mqtt`, and `modbus`.
 
 ## Output
 
@@ -169,6 +179,19 @@ This timestamp can be used to identify the capture window for the group of conne
 | **mqtt.publish**               | Array of publish events. |
 | **mqtt.publish[].topic**       | Topic used by a PUBLISH packet. |
 | **mqtt.publish[].msg**         | MQTT message payload as decoded by Wireshark. |
+
+### MODBUS Fields
+
+| **JSON Field**                    | **Description**                           |
+|-----------------------------------|---------------------------------------|
+| **modbus.unit_id**                | Unit ID of the Modbus slave device. |
+| **modbus.read_requests**          | Count of Modbus read requests. |
+| **modbus.write_requests**         | Count of Modbus write requests. |
+| **modbus.diagnostic_requests**    | Count of Modbus diagnostic requests. |
+| **modbus.other_requests**         | Count of Modbus requests of other known types. |
+| **modbus.undefined_requests**     | Count of Modbus requests with an unknown function code. |
+| **modbus.success_responses**      | Count of successful Modbus responses. |
+| **modbus.error_responses**        | Count of Modbus error responses. |
 
 
 ### JSON Examples
