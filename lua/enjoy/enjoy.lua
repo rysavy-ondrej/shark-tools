@@ -25,6 +25,7 @@ UDP – User Datagram Protocol specifics.
 DNS – Domain Name System query and response data.
 TLS – Transport Layer Security handshake and encryption parameters.
 HTTP/HTTP2 – Web protocol transactions and header information.
+MQTT – Broker connection, subscribe, and publish information.
 
 Required Modules:
 
@@ -34,6 +35,7 @@ enjoy_dns – For parsing and processing DNS-related fields.
 enjoy_tls – For parsing and processing TLS-related fields.
 enjoy_http – For parsing and processing HTTP-related fields.
 enjoy_http2 – For parsing and processing HTTP/2-related fields.
+enjoy_mqtt – For parsing and processing MQTT-related fields.
 
 The module outputs each connection record as a line of Newline-Delimited JSON (NDJSON) to stdout, 
 facilitating easy integration with downstream processing pipelines.
@@ -160,6 +162,9 @@ http2.create_tap(connections)
 
 local dns = require("enjoy_dns")
 dns.create_tap(connections, __debug)
+
+local mqtt = require("enjoy_mqtt")
+mqtt.create_tap(connections)
 
 -------------------------------------------------------------------------------
 -- FIELDS:

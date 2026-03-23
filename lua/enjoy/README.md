@@ -14,6 +14,7 @@ A connection is defined as a bidirectional flow where the client (the initiating
 - **DNS** – Domain Name System query and response data.
 - **TLS** – Transport Layer Security handshake and encryption parameters.
 - **HTTP/HTTP2** – Web protocol transactions and header information.
+- **MQTT** – Broker connection, subscribe, and publish information.
 
 Each enriched connection record is output as a line of Newline-Delimited JSON (NDJSON) to stdout, which makes it easy to integrate with downstream processing pipelines.
 
@@ -27,6 +28,7 @@ enjoy depends on several Lua modules for processing and encoding the captured da
 - **enjoy_tls** – For parsing and processing TLS-related fields.
 - **enjoy_http** – For parsing and processing HTTP-related fields.
 - **enjoy_http2** – For parsing and processing HTTP/HTTP2-related fields.
+- **enjoy_mqtt** – For parsing and processing MQTT-related fields.
 
 ## Usage
 
@@ -152,6 +154,21 @@ This timestamp can be used to identify the capture window for the group of conne
 | **http.res[].content_type**    | The Content-Type header value of the response (e.g., "application/json; charset=utf-8").                         |
 | **http.res[].content_len**     | The Content-Length header value, indicating the size of the response body (e.g., "956").                         |
 | **http.res[].num**             | Sequence or identifier number for the HTTP response.                                                         |
+
+### MQTT Fields
+
+| **JSON Field**                 | **Description**                           |
+|--------------------------------|---------------------------------------|
+| **mqtt.connection**            | MQTT connection metadata collected from CONNECT and CONNACK packets. |
+| **mqtt.connection.clientid**   | MQTT client identifier. |
+| **mqtt.connection.ver**        | MQTT protocol version. |
+| **mqtt.connection.protoname**  | MQTT protocol name. |
+| **mqtt.connection.conack**     | MQTT CONNACK return value. |
+| **mqtt.subscribe**             | Array of subscribe events. |
+| **mqtt.subscribe[].topics**    | Topics requested by a SUBSCRIBE packet. |
+| **mqtt.publish**               | Array of publish events. |
+| **mqtt.publish[].topic**       | Topic used by a PUBLISH packet. |
+| **mqtt.publish[].msg**         | MQTT message payload as decoded by Wireshark. |
 
 
 ### JSON Examples
